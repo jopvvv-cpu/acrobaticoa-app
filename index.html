@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AcrobáticoA</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icono.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icono-192.png">
+<meta name="theme-color" content="#d6336c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra superior con herramientas, área central con las páginas apiladas, panel lateral de miniaturas en escritorio */
+:root {
+  --bg: #f3f1f7;
+  --surface: #ffffff;
+  --fg: #1d1a2b;
+  --muted: #6b6582;
+  --line: #dcd7e8;
+  --accent: #d6336c;      /* rojo lona de circo */
+  --accent-2: #4c3fb3;    /* añil del trapecio */
+  --accent-fg: #ffffff;
+  --page-shadow: 0 2px 10px rgba(40, 30, 80, .14);
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15131f; --surface: #211e30; --fg: #ece9f6; --muted: #a39dba; --line: #353049;
+    --accent: #f06595; --accent-2: #9186f0; --accent-fg: #15131f;
+    --page-shadow: 0 2px 14px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15131f; --surface: #211e30; --fg: #ece9f6; --muted: #a39dba; --line: #353049;
+  --accent: #f06595; --accent-2: #9186f0; --accent-fg: #15131f;
+  --page-shadow: 0 2px 14px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.45 var(--font-body);
+  display: flex; flex-direction: column;
+}
+header {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+}
+.brand { display: flex; align-items: center; gap: 8px; margin-right: auto; }
+.brand h1 {
+  margin: 0; font: 800 22px/1 var(--font-display); letter-spacing: -.02em;
+}
+.brand h1 .tumble { display: inline-block; color: var(--accent); transform-origin: 50% 60%; }
+.brand small { color: var(--muted); font-size: 12px; }
+#acrobata { width: 40px; height: 40px; overflow: visible; }
+#acrobata .fig { transform-origin: 20px 24px; transform-box: view-box; }
+#acrobata.salto .fig { animation: salto .9s cubic-bezier(.3,.1,.3,1); }
+#acrobata.rueda .fig { animation: rueda 1.6s linear infinite; }
+.brand.salto .tumble { animation: salto .9s cubic-bezier(.3,.1,.3,1) .15s; }
+@keyframes salto {
+  0% { transform: translateY(0) rotate(0); }
+  20% { transform: translateY(3px) scaleY(.85) rotate(0); }
+  55% { transform: translateY(-16px) rotate(-200deg); }
+  85% { transform: translateY(0) rotate(-360deg); }
+  92% { transform: translateY(2px) scaleY(.92) rotate(-360deg); }
+  100% { transform: translateY(0) rotate(-360deg); }
+}
+@keyframes rueda { to { transform: rotate(360deg); } }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.group { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 10px; }
+button, .btn {
+  font: 500 13px/1 var(--font-body); color: var(--fg); background: transparent;
+  border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+button:hover, .btn:hover { background: color-mix(in srgb, var(--accent-2) 12%, transparent); }
+button:focus-visible, .btn:focus-within, input:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+button[aria-pressed="true"] { background: var(--accent-2); color: #fff; }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+button.primary:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
+.btn input[type=file] { display: none; }
+input[type=color] { width: 30px; height: 30px; border: 0; padding: 0; background: none; cursor: pointer; }
+label.size { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; padding: 0 6px; }
+label.size input { width: 70px; accent-color: var(--accent-2); }
+.ico { width: 16px; height: 16px; flex: none; }
+
+main { flex: 1; display: flex; min-height: 0; }
+#thumbs {
+  width: 150px; flex: none; overflow-y: auto; border-right: 1px solid var(--line);
+  background: var(--surface); padding: 12px; display: flex; flex-direction: column; gap: 12px;
+}
+#thumbs .t { position: relative; cursor: pointer; text-align: center; font-size: 12px; color: var(--muted); }
+#thumbs canvas { width: 100%; height: auto; display: block; box-shadow: var(--page-shadow); border-radius: 2px; background: #fff; }
+#thumbs .t.deleted canvas { opacity: .25; }
+#thumbs .t button { position: absolute; top: 4px; right: 4px; padding: 4px 6px; font-size: 11px; background: var(--surface); border: 1px solid var(--line); }
+#viewer {
+  flex: 1; overflow: auto; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; align-items: center; gap: 24px;
+}
+.page { position: relative; box-shadow: var(--page-shadow); background: #fff; flex: none; }
+.page.entra { animation: entra .7s cubic-bezier(.2,.8,.3,1.2) both; }
+@keyframes entra {
+  from { transform: perspective(900px) rotateX(-70deg) translateY(-30px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.page canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.page .ov { touch-action: none; }
+.page.deleted::after {
+  content: "Página marcada para eliminar"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 80%, transparent); font: 600 16px var(--font-display); color: var(--accent);
+}
+.page textarea {
+  position: absolute; z-index: 3; border: 1px dashed var(--accent-2); background: rgba(255,255,255,.9);
+  font-family: Helvetica, Arial, sans-serif; line-height: 1.2; padding: 0; margin: 0; resize: both; min-width: 120px; outline: none;
+}
+.vacio { margin: auto; max-width: 440px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+.vacio h2 { margin: 0; font: 800 26px/1.15 var(--font-display); text-wrap: balance; }
+.vacio p { margin: 0; color: var(--muted); }
+.vacio .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.vacio .acciones .btn, .vacio .acciones button { border: 1px solid var(--line); padding: 10px 14px; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500;
+  opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20;
+}
+#toast.show { opacity: 1; }
+dialog {
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--fg);
+  padding: 20px; max-width: calc(100vw - 32px);
+}
+dialog::backdrop { background: rgba(20, 15, 40, .45); }
+dialog h3 { margin: 0 0 8px; font: 800 18px var(--font-display); }
+dialog p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+#firmaCanvas { width: 420px; max-width: 100%; height: 160px; background: #fff; border: 1px solid var(--line); border-radius: 8px; touch-action: none; display: block; }
+.fila { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+.fila button { border: 1px solid var(--line); }
+
+@media (max-width: 720px) {
+  #thumbs { display: none; }
+  .btn .txt, button .txt { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #acrobata .fig, .brand .tumble, .page.entra { animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand" id="brand">
+    <svg id="acrobata" viewBox="0 0 40 40" aria-hidden="true">
+      <!-- Pequeño acróbata: hace un mortal hacia atrás al guardar -->
+      <g class="fig" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+        <circle cx="20" cy="7" r="4" fill="var(--accent)" stroke="none"/>
+        <path d="M20 12 L20 25" stroke="var(--fg)"/>
+        <path d="M20 15 L11 8 M20 15 L29 8" stroke="var(--accent-2)"/>
+        <path d="M20 25 L13 35 M20 25 L27 35" stroke="var(--fg)"/>
+      </g>
+    </svg>
+    <div>
+      <h1>Acrobático<span class="tumble">A</span></h1>
+      <small id="nombreDoc">Editor de PDF para el cole</small>
+    </div>
+  </div>
+
+  <div class="toolbar" role="toolbar" aria-label="Herramientas">
+    <div class="group">
+      <label class="btn" title="Abrir PDF"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h6l2 2h10v10H3z"/></svg><span class="txt">Abrir</span><input type="file" id="archivo" accept="application/pdf"></label>
+      <button id="nuevo" title="Documento en blanco"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l4 4v14H6zM12 10v6M9 13h6"/></svg><span class="txt">Nuevo</span></button>
+    </div>
+    <div class="group" id="herramientas">
+      <button data-tool="pen" aria-pressed="true" title="Lápiz (P)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg><span class="txt">Lápiz</span></button>
+      <button data-tool="text" title="Texto (T)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5h14M12 5v14"/></svg><span class="txt">Texto</span></button>
+      <button data-tool="highlight" title="Resaltar (R)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16" stroke-width="5" opacity=".4"/><path d="M8 14l7-9 3 3-7 9H8z"/></svg><span class="txt">Resaltar</span></button>
+      <button data-tool="rect" title="Rectángulo"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12"/></svg><span class="txt">Caja</span></button>
+      <button data-tool="whiteout" title="Corrector: tapa texto con blanco"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="8" rx="1"/><path d="M8 12h8" stroke-dasharray="2 2"/></svg><span class="txt">Corrector</span></button>
+      <button data-tool="sign" title="Firma"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-6 5-9 6-7s-2 7 0 7 3-5 5-5 1 4 3 4 3-2 4-2"/></svg><span class="txt">Firma</span></button>
+    </div>
+    <div class="group">
+      <input type="color" id="color" value="#1d4ed8" title="Color">
+      <label class="size" title="Grosor / tamaño">Tamaño <input type="range" id="tam" min="1" max="40" value="3"></label>
+    </div>
+    <div class="group">
+      <button id="deshacer" title="Deshacer (Ctrl+Z)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-3"/></svg></button>
+      <button id="menos" title="Alejar">−</button>
+      <button id="mas" title="Acercar">+</button>
+    </div>
+    <button id="instalar" title="Instalar AcrobáticoA en este ordenador" hidden><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 7v6M9 10l3 3 3-3"/></svg><span class="txt">Instalar</span></button>
+    <button id="guardar" class="primary" title="Guardar PDF (Ctrl+S)" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Guardar con voltereta</button>
+  </div>
+</header>
+
+<main>
+  <aside id="thumbs" aria-label="Páginas"></aside>
+  <section id="viewer">
+    <div class="vacio" id="vacio">
+      <svg viewBox="0 0 40 40" width="90" height="90" id="acrobataGrande" aria-hidden="true" style="overflow:visible">
+        <g style="transform-origin:20px 22px;animation:rueda 2.4s linear infinite" fill="none" stroke-linecap="round" stroke-width="3">
+          <circle cx="20" cy="7" r="4" fill="var(--accent)" stroke="none"/>
+          <path d="M20 12 L20 25" stroke="var(--fg)"/>
+          <path d="M20 15 L9 12 M20 15 L31 12" stroke="var(--accent-2)"/>
+          <path d="M20 25 L12 34 M20 25 L28 34" stroke="var(--fg)"/>
+        </g>
+      </svg>
+      <h2>Abre un PDF del colegio y edítalo aquí</h2>
+      <p>Escribe respuestas, subraya, tapa errores con el corrector, firma y guarda. Todo ocurre en tu navegador: el archivo no se sube a ningún sitio.</p>
+      <div class="acciones">
+        <label class="btn">Abrir PDF<input type="file" id="archivo2" accept="application/pdf"></label>
+        <button id="ejemplo">Probar con una ficha de ejemplo</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlgFirma">
+  <h3>Dibuja tu firma</h3>
+  <p>Después haz clic en la página donde quieras colocarla.</p>
+  <canvas id="firmaCanvas" width="840" height="320"></canvas>
+  <div class="fila">
+    <button id="firmaBorrar">Borrar</button>
+    <button id="firmaCancelar">Cancelar</button>
+    <button id="firmaOk" class="primary">Usar firma</button>
+  </div>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const { PDFDocument, StandardFonts, rgb, LineCapStyle } = PDFLib;
+
+const $ = s => document.querySelector(s);
+const viewer = $('#viewer'), thumbs = $('#thumbs');
+const S = {
+  bytes: null, pdf: null, nombre: 'documento.pdf', zoom: 1.25,
+  tool: 'pen', color: '#1d4ed8', size: 3,
+  pages: [],      // { index, w, h, deleted, annots: [], el, ov }
+  history: [],    // { page, annot }
+  firma: null,    // { dataUrl, img, w, h }
+};
+const dpr = () => window.devicePixelRatio || 1;
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+// El detalle acrobático: el acróbata (y la "A" del logo) dan un mortal hacia atrás
+function voltereta() {
+  const a = $('#acrobata'), b = $('#brand');
+  a.classList.remove('salto'); b.classList.remove('salto');
+  void a.getBoundingClientRect();
+  a.classList.add('salto'); b.classList.add('salto');
+}
+
+// ---------- Carga ----------
+async function abrir(bytes, nombre) {
+  S.bytes = bytes; S.nombre = nombre || 'documento.pdf';
+  S.pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+  S.pages = []; S.history = [];
+  for (let i = 1; i <= S.pdf.numPages; i++) {
+    const vp = (await S.pdf.getPage(i)).getViewport({ scale: 1 });
+    S.pages.push({ index: i - 1, w: vp.width, h: vp.height, deleted: false, annots: [] });
+  }
+  $('#nombreDoc').textContent = S.nombre + ' · ' + S.pages.length + (S.pages.length === 1 ? ' página' : ' páginas');
+  $('#guardar').disabled = false;
+  await renderTodo(true);
+  voltereta();
+}
+async function leerArchivo(f) {
+  if (!f) return;
+  try { await abrir(new Uint8Array(await f.arrayBuffer()), f.name); }
+  catch (e) { console.error(e); toast('No se pudo abrir ese archivo. Comprueba que es un PDF sin contraseña.'); }
+}
+$('#archivo').onchange = e => leerArchivo(e.target.files[0]);
+$('#archivo2').onchange = e => leerArchivo(e.target.files[0]);
+viewer.addEventListener('dragover', e => e.preventDefault());
+viewer.addEventListener('drop', e => { e.preventDefault(); leerArchivo(e.dataTransfer.files[0]); });
+
+$('#nuevo').onclick = async () => {
+  const d = await PDFDocument.create(); d.addPage([595.28, 841.89]); // A4
+  await abrir(await d.save(), 'nuevo.pdf');
+};
+$('#ejemplo').onclick = async () => {
+  const d = await PDFDocument.create();
+  const p = d.addPage([595.28, 841.89]);
+  const f = await d.embedFont(StandardFonts.Helvetica), fb = await d.embedFont(StandardFonts.HelveticaBold);
+  p.drawText('Ficha de Ciencias Naturales · 5.º de Primaria', { x: 50, y: 780, size: 16, font: fb });
+  p.drawText('Nombre: ______________________________   Fecha: ___________', { x: 50, y: 745, size: 12, font: f });
+  const preguntas = ['1. ¿Cuáles son los tres estados de la materia?', '2. ¿Qué órgano bombea la sangre por el cuerpo?', '3. Nombra dos planetas del sistema solar.'];
+  preguntas.forEach((q, i) => {
+    const y = 690 - i * 110;
+    p.drawText(q, { x: 50, y, size: 12, font: f });
+    for (let l = 1; l <= 3; l++) p.drawLine({ start: { x: 50, y: y - l * 24 }, end: { x: 545, y: y - l * 24 }, thickness: .5, color: rgb(.7, .7, .7) });
+  });
+  p.drawText('Firma del padre/madre o tutor:', { x: 50, y: 250, size: 12, font: f });
+  p.drawRectangle({ x: 50, y: 160, width: 250, height: 70, borderColor: rgb(.6, .6, .6), borderWidth: 1 });
+  await abrir(await d.save(), 'ficha-ejemplo.pdf');
+};
+
+// ---------- Render ----------
+async function renderTodo(animar) {
+  viewer.innerHTML = ''; thumbs.innerHTML = '';
+  for (const p of S.pages) {
+    const page = await S.pdf.getPage(p.index + 1);
+    const el = document.createElement('div');
+    el.className = 'page' + (animar ? ' entra' : '') + (p.deleted ? ' deleted' : '');
+    el.style.animationDelay = (animar ? Math.min(p.index, 6) * 90 : 0) + 'ms';
+    el.style.width = p.w * S.zoom + 'px'; el.style.height = p.h * S.zoom + 'px';
+    const base = document.createElement('canvas'), ov = document.createElement('canvas');
+    ov.className = 'ov';
+    const vp = page.getViewport({ scale: S.zoom * dpr() });
+    base.width = ov.width = Math.floor(vp.width); base.height = ov.height = Math.floor(vp.height);
+    el.append(base, ov); viewer.append(el);
+    p.el = el; p.ov = ov;
+    await page.render({ canvasContext: base.getContext('2d'), viewport: vp }).promise;
+    pintar(p); engancharPuntero(p);
+
+    // miniatura
+    const t = document.createElement('div'); t.className = 't' + (p.deleted ? ' deleted' : '');
+    const tc = document.createElement('canvas'); const tvp = page.getViewport({ scale: 120 / p.w });
+    tc.width = tvp.width; tc.height = tvp.height;
+    await page.render({ canvasContext: tc.getContext('2d'), viewport: tvp }).promise;
+    const del = document.createElement('button');
+    del.textContent = p.deleted ? 'Recuperar' : 'Quitar';
+    del.title = p.deleted ? 'Recuperar esta página' : 'Quitar esta página al guardar';
+    del.onclick = ev => { ev.stopPropagation(); alternarBorrado(p); };
+    t.append(tc, del, document.createTextNode('Página ' + (p.index + 1)));
+    t.onclick = () => el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    thumbs.append(t);
+  }
+}
+function alternarBorrado(p) {
+  if (!p.deleted && S.pages.filter(x => !x.deleted).length === 1) return toast('El documento necesita al menos una página.');
+  p.deleted = !p.deleted;
+  p.el.classList.toggle('deleted', p.deleted);
+  const t = thumbs.children[S.pages.indexOf(p)];
+  t.classList.toggle('deleted', p.deleted);
+  t.querySelector('button').textContent = p.deleted ? 'Recuperar' : 'Quitar';
+}
+
+const lineas = a => a.text.split('\n');
+function pintar(p, extra) {
+  const c = p.ov.getContext('2d'), k = S.zoom * dpr();
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, p.ov.width, p.ov.height);
+  c.setTransform(k, 0, 0, k, 0, 0);
+  for (const a of extra ? [...p.annots, extra] : p.annots) dibujar(c, a);
+}
+function dibujar(c, a) {
+  c.save();
+  if (a.type === 'path') {
+    c.strokeStyle = a.color; c.lineWidth = a.size; c.lineCap = c.lineJoin = 'round';
+    c.beginPath(); a.pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y));
+    if (a.pts.length === 1) c.lineTo(a.pts[0][0] + .01, a.pts[0][1]);
+    c.stroke();
+  } else if (a.type === 'rect') {
+    c.strokeStyle = a.color; c.lineWidth = a.size; c.strokeRect(a.x, a.y, a.w, a.h);
+  } else if (a.type === 'highlight') {
+    c.globalAlpha = .35; c.fillStyle = a.color; c.fillRect(a.x, a.y, a.w, a.h);
+  } else if (a.type === 'whiteout') {
+    c.fillStyle = '#fff'; c.fillRect(a.x, a.y, a.w, a.h);
+  } else if (a.type === 'text') {
+    c.fillStyle = a.color; c.font = a.size + 'px Helvetica, Arial, sans-serif';
+    lineas(a).forEach((l, i) => c.fillText(l, a.x, a.y + a.size * .8 + i * a.size * 1.2));
+  } else if (a.type === 'image') {
+    c.drawImage(a.img, a.x, a.y, a.w, a.h);
+  }
+  c.restore();
+}
+function normRect(x0, y0, x1, y1) { return { x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) }; }
+function agregar(p, a) { p.annots.push(a); S.history.push({ p, a }); pintar(p); }
+
+// ---------- Interacción ----------
+function engancharPuntero(p) {
+  const ov = p.ov; let actual = null, inicio = null;
+  const pos = e => { const r = ov.getBoundingClientRect(); return [(e.clientX - r.left) / S.zoom, (e.clientY - r.top) / S.zoom]; };
+  ov.onpointerdown = e => {
+    if (p.deleted) return;
+    const [x, y] = pos(e);
+    if (S.tool === 'text') { e.preventDefault(); return editorTexto(p, x, y); }
+    if (S.tool === 'sign') {
+      if (!S.firma) return pedirFirma();
+      const w = 160, h = w * S.firma.h / S.firma.w;
+      agregar(p, { type: 'image', x: x - w / 2, y: y - h / 2, w, h, img: S.firma.img, dataUrl: S.firma.dataUrl });
+      return;
+    }
+    ov.setPointerCapture(e.pointerId); inicio = [x, y];
+    if (S.tool === 'pen') actual = { type: 'path', pts: [[x, y]], color: S.color, size: S.size };
+    else actual = { type: S.tool, x, y, w: 0, h: 0, color: S.tool === 'highlight' ? '#ffd43b' : S.color, size: S.size };
+    pintar(p, actual);
+  };
+  ov.onpointermove = e => {
+    if (!actual) return;
+    const [x, y] = pos(e);
+    if (actual.type === 'path') actual.pts.push([x, y]);
+    else Object.assign(actual, normRect(inicio[0], inicio[1], x, y));
+    pintar(p, actual);
+  };
+  ov.onpointerup = ov.onpointercancel = () => {
+    if (!actual) return;
+    const ok = actual.type === 'path' || (actual.w > 2 && actual.h > 2);
+    if (ok) agregar(p, actual); else pintar(p);
+    actual = null;
+  };
+}
+function editorTexto(p, x, y) {
+  const size = Math.max(8, S.size * 2 + 6);
+  const ta = document.createElement('textarea');
+  ta.style.left = x * S.zoom + 'px'; ta.style.top = y * S.zoom + 'px';
+  ta.style.fontSize = size * S.zoom + 'px'; ta.style.color = S.color;
+  ta.rows = 1; ta.placeholder = 'Escribe aquí…';
+  p.el.append(ta); ta.focus(); requestAnimationFrame(() => ta.focus());
+  let hecho = false;
+  const fin = () => {
+    if (hecho) return; hecho = true;
+    const text = ta.value.replace(/\s+$/, ''); ta.remove();
+    if (text) agregar(p, { type: 'text', x, y, text, color: S.color, size });
+  };
+  ta.onblur = fin;
+  ta.onkeydown = ev => {
+    if (ev.key === 'Escape') { ta.value = ''; fin(); }
+    if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); fin(); }
+  };
+}
+
+$('#herramientas').onclick = e => {
+  const b = e.target.closest('button[data-tool]'); if (!b) return;
+  elegir(b.dataset.tool);
+};
+function elegir(tool) {
+  S.tool = tool;
+  document.querySelectorAll('#herramientas button').forEach(x => x.setAttribute('aria-pressed', x.dataset.tool === tool));
+  if (tool === 'sign' && !S.firma) pedirFirma();
+  if (tool === 'sign' && S.firma) toast('Haz clic en la página para colocar tu firma.');
+}
+$('#color').oninput = e => S.color = e.target.value;
+$('#tam').oninput = e => S.size = +e.target.value;
+$('#deshacer').onclick = deshacer;
+function deshacer() {
+  const h = S.history.pop(); if (!h) return;
+  h.p.annots.splice(h.p.annots.lastIndexOf(h.a), 1); pintar(h.p);
+}
+$('#mas').onclick = () => zoom(1.2);
+$('#menos').onclick = () => zoom(1 / 1.2);
+function zoom(f) { if (!S.pdf) return; S.zoom = Math.min(4, Math.max(.4, S.zoom * f)); renderTodo(false); }
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); deshacer(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(); }
+  else if (!e.ctrlKey && !e.metaKey) {
+    const m = { p: 'pen', t: 'text', r: 'highlight' }[e.key.toLowerCase()];
+    if (m) elegir(m);
+  }
+});
+
+// ---------- Firma ----------
+const dlg = $('#dlgFirma'), fc = $('#firmaCanvas'), fctx = fc.getContext('2d');
+let firmaVacia = true;
+function pedirFirma() { fctx.clearRect(0, 0, fc.width, fc.height); firmaVacia = true; dlg.showModal(); }
+(() => {
+  let dib = false;
+  const pos = e => { const r = fc.getBoundingClientRect(); return [(e.clientX - r.left) * fc.width / r.width, (e.clientY - r.top) * fc.height / r.height]; };
+  fc.onpointerdown = e => { dib = true; fc.setPointerCapture(e.pointerId); fctx.beginPath(); fctx.moveTo(...pos(e)); };
+  fc.onpointermove = e => {
+    if (!dib) return;
+    fctx.lineWidth = 5; fctx.lineCap = fctx.lineJoin = 'round'; fctx.strokeStyle = '#111';
+    fctx.lineTo(...pos(e)); fctx.stroke(); firmaVacia = false;
+  };
+  fc.onpointerup = () => dib = false;
+})();
+$('#firmaBorrar').onclick = () => { fctx.clearRect(0, 0, fc.width, fc.height); firmaVacia = true; };
+$('#firmaCancelar').onclick = () => { dlg.close(); if (!S.firma) elegir('pen'); };
+$('#firmaOk').onclick = () => {
+  if (firmaVacia) return toast('Dibuja tu firma primero.');
+  // recorta el área dibujada
+  const d = fctx.getImageData(0, 0, fc.width, fc.height).data;
+  let x0 = fc.width, y0 = fc.height, x1 = 0, y1 = 0;
+  for (let y = 0; y < fc.height; y++) for (let x = 0; x < fc.width; x++) if (d[(y * fc.width + x) * 4 + 3]) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  const w = x1 - x0 + 10, h = y1 - y0 + 10, cut = document.createElement('canvas');
+  cut.width = w; cut.height = h; cut.getContext('2d').drawImage(fc, x0 - 5, y0 - 5, w, h, 0, 0, w, h);
+  const dataUrl = cut.toDataURL('image/png'), img = new Image(); img.src = dataUrl;
+  S.firma = { dataUrl, img, w, h };
+  dlg.close(); toast('Firma lista. Haz clic en la página para colocarla.');
+};
+
+// ---------- Guardar ----------
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); }
+function textoSeguro(font, s) {
+  try { font.encodeText(s); return s; }
+  catch { return [...s].map(ch => { try { font.encodeText(ch); return ch; } catch { return '?'; } }).join(''); }
+}
+async function guardar() {
+  if (!S.bytes) return;
+  try {
+    const doc = await PDFDocument.load(S.bytes, { ignoreEncryption: true });
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const pages = doc.getPages();
+    for (const p of S.pages) {
+      const pg = pages[p.index], H = pg.getHeight();
+      const { x: ox, y: oy } = pg.getMediaBox();
+      const X = x => x + ox, Y = y => H - y + oy;
+      for (const a of p.annots) {
+        if (a.type === 'path') {
+          const color = hexRgb(a.color), pts = a.pts.length === 1 ? [a.pts[0], [a.pts[0][0] + .01, a.pts[0][1]]] : a.pts;
+          for (let i = 1; i < pts.length; i++)
+            pg.drawLine({ start: { x: X(pts[i - 1][0]), y: Y(pts[i - 1][1]) }, end: { x: X(pts[i][0]), y: Y(pts[i][1]) }, thickness: a.size, color, lineCap: LineCapStyle.Round });
+        } else if (a.type === 'rect') {
+          pg.drawRectangle({ x: X(a.x), y: Y(a.y + a.h), width: a.w, height: a.h, borderColor: hexRgb(a.color), borderWidth: a.size });
+        } else if (a.type === 'highlight') {
+          pg.drawRectangle({ x: X(a.x), y: Y(a.y + a.h), width: a.w, height: a.h, color: hexRgb(a.color), opacity: .35 });
+        } else if (a.type === 'whiteout') {
+          pg.drawRectangle({ x: X(a.x), y: Y(a.y + a.h), width: a.w, height: a.h, color: rgb(1, 1, 1) });
+        } else if (a.type === 'text') {
+          lineas(a).forEach((l, i) => pg.drawText(textoSeguro(font, l), { x: X(a.x), y: Y(a.y + a.size * .8 + i * a.size * 1.2), size: a.size, font, color: hexRgb(a.color) }));
+        } else if (a.type === 'image') {
+          const png = await doc.embedPng(a.dataUrl);
+          pg.drawImage(png, { x: X(a.x), y: Y(a.y + a.h), width: a.w, height: a.h });
+        }
+      }
+    }
+    S.pages.filter(p => p.deleted).map(p => p.index).sort((a, b) => b - a).forEach(i => doc.removePage(i));
+    doc.setProducer('AcrobáticoA'); doc.setModificationDate(new Date());
+    const out = await doc.save();
+    const url = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = S.nombre.replace(/\.pdf$/i, '') + '-editado.pdf';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    voltereta(); toast('¡Hop! Guardado como ' + a.download);
+  } catch (e) {
+    console.error(e); toast('No se pudo guardar el PDF: ' + e.message);
+  }
+}
+$('#guardar').onclick = guardar;
+
+// ---------- Aplicación instalable ----------
+// Abre el PDF elegido con clic derecho › Abrir con › AcrobáticoA
+if ('launchQueue' in window) {
+  launchQueue.setConsumer(async params => {
+    if (params.files && params.files.length) leerArchivo(await params.files[0].getFile());
+  });
+}
+let avisoInstalar = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); avisoInstalar = e; $('#instalar').hidden = false;
+});
+$('#instalar').onclick = async () => {
+  if (!avisoInstalar) return;
+  avisoInstalar.prompt();
+  const { outcome } = await avisoInstalar.userChoice;
+  avisoInstalar = null; $('#instalar').hidden = true;
+  if (outcome === 'accepted') { voltereta(); toast('¡Instalada! Ya aparece en «Abrir con» al hacer clic derecho en un PDF.'); }
+};
+window.addEventListener('appinstalled', () => { $('#instalar').hidden = true; });
+if ('serviceWorker' in navigator && window.isSecureContext && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

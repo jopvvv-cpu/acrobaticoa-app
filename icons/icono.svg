@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#d6336c"/>
+  <!-- hoja de papel -->
+  <path d="M150 96h150l62 62v258H150z" fill="#ffffff"/>
+  <path d="M300 96v62h62" fill="#f3d2de"/>
+  <!-- acróbata en pleno mortal -->
+  <g transform="rotate(-25 256 280)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="22">
+    <circle cx="256" cy="176" r="30" fill="#4c3fb3" stroke="none"/>
+    <path d="M256 216v92" stroke="#1d1a2b"/>
+    <path d="M256 240l-62-48M256 240l62-48" stroke="#4c3fb3"/>
+    <path d="M256 308l-48 70M256 308l48 70" stroke="#1d1a2b"/>
+  </g>
+</svg>
