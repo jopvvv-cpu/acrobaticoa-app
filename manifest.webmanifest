@@ -10,17 +10,117 @@
   "background_color": "#f3f1f7",
   "theme_color": "#d6336c",
   "icons": [
-    { "src": "icons/icono-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icono-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icono-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-24.png",
+      "sizes": "24x24",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icono-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "file_handlers": [
     {
       "action": "./",
-      "accept": { "application/pdf": [".pdf"] },
-      "icons": [{ "src": "icons/icono-192.png", "sizes": "192x192", "type": "image/png" }],
+      "accept": {
+        "application/pdf": [
+          ".pdf"
+        ]
+      },
+      "icons": [
+        {
+          "src": "icons/icono-16.png",
+          "sizes": "16x16",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-24.png",
+          "sizes": "24x24",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-32.png",
+          "sizes": "32x32",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-48.png",
+          "sizes": "48x48",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-64.png",
+          "sizes": "64x64",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-128.png",
+          "sizes": "128x128",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/icono-256.png",
+          "sizes": "256x256",
+          "type": "image/png"
+        }
+      ],
       "launch_type": "single-client"
     }
   ],
-  "launch_handler": { "client_mode": "focus-existing" }
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }

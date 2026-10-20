@@ -12,7 +12,7 @@ Es un único archivo, `index.html`, que funciona en el navegador. El PDF no se s
 
 ## Instalarla en Windows (para que salga en «Abrir con»)
 
-1. Entra en la dirección de GitHub Pages: `https://jopvvv-cpu.github.io/AcrobaticoA/` con Chrome o Edge.
+1. Entra en la dirección de GitHub Pages: `https://jopvvv-cpu.github.io/acrobaticoa-app/` con Chrome o Edge.
 2. Pulsa el botón **Instalar** de la barra de arriba (o el icono de instalar en la barra de direcciones).
 3. Ahora, al hacer clic derecho en un PDF › **Abrir con**, aparece **AcrobáticoA**. Puedes marcarla como **Siempre**.
 
