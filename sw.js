@@ -1,6 +1,6 @@
 // Guarda la aplicación para que abra aunque no haya internet.
 // Los PDF que abres nunca pasan por aquí: solo se guardan los archivos del programa.
-const CACHE = 'acrobaticoa-v2';
+const CACHE = 'acrobaticoa-v5';
 const ARCHIVOS = [
   './', './index.html', './manifest.webmanifest',
   './icons/icono-192.png', './icons/icono-512.png',
