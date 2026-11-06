@@ -161,6 +161,11 @@ dialog p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
 #firmaCanvas { width: 420px; max-width: 100%; height: 160px; background: #fff; border: 1px solid var(--line); border-radius: 8px; touch-action: none; display: block; }
 .fila { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
 .fila button { border: 1px solid var(--line); }
+.firma-opciones { justify-content: space-between; align-items: center; }
+.firma-opciones .btn { border: 1px solid var(--line); }
+.recordar { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.recordar input { accent-color: var(--accent-2); width: 16px; height: 16px; }
+#firmaCanvas.subida { background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
 #dlgCombinar { width: 560px; }
 #listaComb { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
 #listaComb li { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
@@ -263,6 +268,7 @@ dialog p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
   </div>
   <div class="acciones-doc">
     <button id="instalar" title="Instalar AcrobáticoA en este ordenador" hidden><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 7v6M9 10l3 3 3-3"/></svg><span class="txt">Instalar</span></button>
+    <button id="imprimir" title="Imprimir (Ctrl+P)" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg><span class="txt">Imprimir</span></button>
     <button id="guardar" class="primary" title="Guardar PDF (Ctrl+S)" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Guardar<span class="solo-ancho"> con voltereta</span></span></button>
   </div>
 </header>
@@ -291,10 +297,16 @@ dialog p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
 </main>
 
 <dialog id="dlgFirma">
-  <h3>Dibuja tu firma</h3>
-  <p>Después haz clic en la página donde quieras colocarla.</p>
+  <h3>Tu firma</h3>
+  <p>Dibújala en el recuadro o súbela desde una foto. Después haz clic en la página donde quieras colocarla.</p>
   <canvas id="firmaCanvas" width="840" height="320"></canvas>
+  <div class="fila firma-opciones">
+    <label class="btn" title="JPG, PNG o foto del celular. Se quita el fondo blanco"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Subir firma desde imagen<input type="file" id="firmaArchivo" accept="image/*"></label>
+    <label class="recordar"><input type="checkbox" id="firmaRecordar"> Recordar mi firma en esta computadora</label>
+  </div>
+  <p class="aviso" id="firmaAviso">Consejo: firma con bolígrafo azul o negro en una hoja blanca, con buena luz y sin sombras.</p>
   <div class="fila">
+    <button id="firmaOlvidar" hidden>Olvidar firma guardada</button>
     <button id="firmaBorrar">Borrar</button>
     <button id="firmaCancelar">Cancelar</button>
     <button id="firmaOk" class="primary">Usar firma</button>
@@ -373,7 +385,7 @@ async function abrir(bytes, nombre) {
   }
   const nCampos = Object.keys(S.form).length;
   $('#nombreDoc').textContent = S.nombre + ' · ' + S.pages.length + (S.pages.length === 1 ? ' página' : ' páginas') + (nCampos ? ' · ' + nCampos + ' campos para rellenar' : '');
-  $('#guardar').disabled = false;
+  $('#guardar').disabled = false; $('#imprimir').disabled = false;
   // En pantallas estrechas (celular) la página se ajusta al ancho disponible
   const ancho = viewer.clientWidth - 32, p0 = S.pages[0], w0 = giro(p0) % 180 ? p0.h : p0.w;
   if (w0 * S.zoom > ancho) S.zoom = Math.max(.4, ancho / w0);
@@ -852,6 +864,7 @@ function editorTexto(p, x, y, existente) {
 $('#herramientas').onclick = e => {
   const b = e.target.closest('button[data-tool]'); if (!b) return;
   if (b.dataset.tool === 'image') return $('#archivoImagen').click();
+  if (b.dataset.tool === 'sign' && S.tool === 'sign') return pedirFirma();
   elegir(b.dataset.tool);
 };
 const avisos = {
@@ -864,7 +877,7 @@ function elegir(tool) {
   if (tool !== 'select' && S.sel) seleccionar(null, null);
   document.querySelectorAll('#herramientas button').forEach(x => x.setAttribute('aria-pressed', x.dataset.tool === tool));
   if (tool === 'sign' && !S.firma) pedirFirma();
-  else if (tool === 'sign') toast('Haz clic en la página para colocar tu firma.');
+  else if (tool === 'sign') toast('Haz clic en la página para colocar tu firma. Para cambiarla, pulsa Firma otra vez.');
   else if (avisos[tool]) toast(avisos[tool]);
 }
 $('#archivoImagen').onchange = async e => {
@@ -907,6 +920,7 @@ document.addEventListener('keydown', e => {
   if (['TEXTAREA', 'INPUT', 'SELECT'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'color') return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); deshacer(); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') { e.preventDefault(); if (S.bytes) imprimir(); else toast('Abre primero un PDF para imprimirlo.'); }
   else if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel) { e.preventDefault(); borrarSeleccion(); }
   else if (e.key === 'Escape' && S.sel) seleccionar(null, null);
   else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -918,11 +932,81 @@ document.addEventListener('keydown', e => {
 // ---------- Firma ----------
 const dlg = $('#dlgFirma'), fc = $('#firmaCanvas'), fctx = fc.getContext('2d');
 let firmaVacia = true;
-function pedirFirma() { fctx.clearRect(0, 0, fc.width, fc.height); firmaVacia = true; dlg.showModal(); }
+let firmaSubida = null;   // firma ya lista (subida o guardada): { dataUrl, w, h }
+const CLAVE_FIRMA = 'acrobaticoa-firma';
+function limpiarLienzo() { fctx.clearRect(0, 0, fc.width, fc.height); fc.classList.remove('subida'); firmaVacia = true; firmaSubida = null; }
+// Muestra una firma lista centrada en el recuadro, sobre cuadritos para que se vea que el fondo es transparente
+function mostrarFirma(f) {
+  limpiarLienzo(); firmaSubida = f; firmaVacia = false; fc.classList.add('subida');
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min((fc.width - 40) / f.w, (fc.height - 40) / f.h, 3);
+    fctx.drawImage(img, (fc.width - f.w * k) / 2, (fc.height - f.h * k) / 2, f.w * k, f.h * k);
+  };
+  img.src = f.dataUrl;
+}
+function leerGuardada() { try { return JSON.parse(localStorage.getItem(CLAVE_FIRMA)); } catch { return null; } }
+function pedirFirma() {
+  const g = leerGuardada();
+  if (S.firma) mostrarFirma(S.firma); else limpiarLienzo();
+  $('#firmaRecordar').checked = !!g;
+  $('#firmaOlvidar').hidden = !g;
+  dlg.showModal();
+}
+function usarFirma(f) {
+  const img = new Image(); img.src = f.dataUrl;
+  S.firma = { dataUrl: f.dataUrl, img, w: f.w, h: f.h, fmt: 'png' };
+}
+// Al abrir AcrobáticoA se recupera la firma recordada en esta computadora
+(() => { const g = leerGuardada(); if (g && g.dataUrl) usarFirma(g); })();
+
+// Quita el fondo claro de una foto de firma: lo blanco se vuelve transparente y el trazo se conserva con su color
+async function firmaDesdeImagen(archivo) {
+  const bmp = await createImageBitmap(archivo, { imageOrientation: 'from-image' });
+  const k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+  // El papel de una foto rara vez es blanco puro: se toma como «fondo» el tono claro más común
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < d.length; i += 4) hist[Math.round(.299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2])]++;
+  let papel = 255, max = 0;
+  for (let v = 128; v < 256; v++) if (hist[v] > max) { max = hist[v]; papel = v; }
+  const alto = papel - 25, bajo = papel - 90;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const i = (y * c.width + x) * 4, lum = .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2];
+    const a = lum >= alto ? 0 : lum <= bajo ? 255 : Math.round(255 * (alto - lum) / (alto - bajo));
+    d[i + 3] = Math.min(d[i + 3], a);
+    if (a > 0) { d[i] = d[i] * .85; d[i + 1] = d[i + 1] * .85; d[i + 2] = d[i + 2] * .85; }  // trazo un poco más intenso
+    if (a > 60) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) throw new Error('No encontré ninguna firma en la imagen. Prueba con una foto con más contraste.');
+  ctx.putImageData(im, 0, 0);
+  const m = 6, w = Math.min(c.width, x1 + m) - Math.max(0, x0 - m), h = Math.min(c.height, y1 + m) - Math.max(0, y0 - m);
+  const cut = document.createElement('canvas'); cut.width = w; cut.height = h;
+  cut.getContext('2d').drawImage(c, Math.max(0, x0 - m), Math.max(0, y0 - m), w, h, 0, 0, w, h);
+  return { dataUrl: cut.toDataURL('image/png'), w, h };
+}
+$('#firmaArchivo').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try { mostrarFirma(await firmaDesdeImagen(f)); }
+  catch (err) { console.error(err); toast(err.message.startsWith('No encontré') ? err.message : 'No pude abrir esa imagen. Prueba con un JPG o PNG.'); }
+};
+$('#firmaOlvidar').onclick = () => {
+  try { localStorage.removeItem(CLAVE_FIRMA); } catch {}
+  $('#firmaOlvidar').hidden = true; $('#firmaRecordar').checked = false;
+  toast('Firma olvidada en esta computadora.');
+};
 (() => {
   let dib = false;
   const pos = e => { const r = fc.getBoundingClientRect(); return [(e.clientX - r.left) * fc.width / r.width, (e.clientY - r.top) * fc.height / r.height]; };
-  fc.onpointerdown = e => { dib = true; fc.setPointerCapture(e.pointerId); fctx.beginPath(); fctx.moveTo(...pos(e)); };
+  fc.onpointerdown = e => {
+    if (firmaSubida) limpiarLienzo();  // dibujar encima de una firma subida empieza una firma nueva
+    dib = true; fc.setPointerCapture(e.pointerId); fctx.beginPath(); fctx.moveTo(...pos(e));
+  };
   fc.onpointermove = e => {
     if (!dib) return;
     fctx.lineWidth = 5; fctx.lineCap = fctx.lineJoin = 'round'; fctx.strokeStyle = '#111';
@@ -930,10 +1014,19 @@ function pedirFirma() { fctx.clearRect(0, 0, fc.width, fc.height); firmaVacia = 
   };
   fc.onpointerup = () => dib = false;
 })();
-$('#firmaBorrar').onclick = () => { fctx.clearRect(0, 0, fc.width, fc.height); firmaVacia = true; };
+$('#firmaBorrar').onclick = limpiarLienzo;
 $('#firmaCancelar').onclick = () => { dlg.close(); if (!S.firma) elegir('pen'); };
 $('#firmaOk').onclick = () => {
-  if (firmaVacia) return toast('Dibuja tu firma primero.');
+  if (firmaVacia) return toast('Dibuja tu firma o súbela desde una imagen.');
+  const listaFirma = f => {
+    usarFirma(f);
+    try {
+      if ($('#firmaRecordar').checked) localStorage.setItem(CLAVE_FIRMA, JSON.stringify(f));
+      else localStorage.removeItem(CLAVE_FIRMA);
+    } catch { toast('No pude recordar la firma en este navegador, pero puedes usarla ahora.'); }
+    dlg.close(); toast('Firma lista. Haz clic en la página para colocarla.');
+  };
+  if (firmaSubida) return listaFirma(firmaSubida);
   // recorta el área dibujada
   const d = fctx.getImageData(0, 0, fc.width, fc.height).data;
   let x0 = fc.width, y0 = fc.height, x1 = 0, y1 = 0;
@@ -942,9 +1035,7 @@ $('#firmaOk').onclick = () => {
   }
   const w = x1 - x0 + 10, h = y1 - y0 + 10, cut = document.createElement('canvas');
   cut.width = w; cut.height = h; cut.getContext('2d').drawImage(fc, x0 - 5, y0 - 5, w, h, 0, 0, w, h);
-  const dataUrl = cut.toDataURL('image/png'), img = new Image(); img.src = dataUrl;
-  S.firma = { dataUrl, img, w, h, fmt: 'png' };
-  dlg.close(); toast('Firma lista. Haz clic en la página para colocarla.');
+  listaFirma({ dataUrl: cut.toDataURL('image/png'), w, h });
 };
 
 // ---------- Guardar ----------
@@ -1076,6 +1167,39 @@ async function guardar() {
   } finally { b.disabled = false; }
 }
 $('#guardar').onclick = guardar;
+
+// ---------- Imprimir ----------
+// Se imprime el PDF ya preparado (con firma, censura, páginas ordenadas…), no la pantalla de AcrobáticoA
+let marcoImpresion = null;
+async function imprimir() {
+  if (!S.bytes) return;
+  const b = $('#imprimir'); b.disabled = true;
+  try {
+    const blob = new Blob([await construirPdf()], { type: 'application/pdf' });
+    if (tactil) {
+      // En el celular la impresión sale del menú Compartir (iPhone) o del visor de PDF (Android)
+      listo = { blob, nombre: S.nombre.replace(/\.pdf$/i, '') + '-editado.pdf' };
+      $('#listoNombre').textContent = 'Para imprimir: Compartir › Imprimir, o descárgalo y ábrelo para imprimir.';
+      const archivo = new File([blob], listo.nombre, { type: 'application/pdf' });
+      $('#listoCompartir').hidden = !(navigator.canShare && navigator.canShare({ files: [archivo] }));
+      return $('#dlgListo').showModal();
+    }
+    if (marcoImpresion) { URL.revokeObjectURL(marcoImpresion.src); marcoImpresion.remove(); }
+    const f = marcoImpresion = document.createElement('iframe');
+    Object.assign(f.style, { position: 'fixed', right: '0', bottom: '0', width: '1px', height: '1px', border: '0', opacity: '0' });
+    f.title = 'Impresión';
+    f.src = URL.createObjectURL(blob);
+    f.onload = () => setTimeout(() => {
+      try { f.contentWindow.focus(); f.contentWindow.print(); }
+      catch (e) { console.error(e); window.open(f.src, '_blank'); toast('Se abrió el PDF en una pestaña: pulsa Ctrl+P para imprimirlo.'); }
+    }, 300);
+    document.body.append(f);
+    toast('Abriendo la ventana de impresión…');
+  } catch (e) {
+    console.error(e); toast('No se pudo preparar la impresión: ' + e.message);
+  } finally { b.disabled = false; }
+}
+$('#imprimir').onclick = imprimir;
 function descargar(blob, nombre) {
   const url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = nombre;
