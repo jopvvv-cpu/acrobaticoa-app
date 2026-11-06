@@ -42,12 +42,13 @@ Publicar la aplicación solo publica el programa. Los PDF que abres se quedan en
 | Resaltar | Arrastra para marcar en amarillo | R |
 | Caja | Rectángulo con borde | |
 | Corrector | Tapa con blanco (lo de debajo sigue en el archivo) | |
-| Firma | Dibuja tu firma una vez y colócala con un clic | |
+| Firma | Dibújala o **súbela desde una foto** (se quita el fondo blanco). Puede recordarse en esa computadora. Pulsa Firma otra vez para cambiarla | |
 | Imagen | Pon un logo, sello o foto dentro de la página | |
 | Censurar | Recuadro negro que **borra de verdad** lo de debajo al guardar (esa página se guarda como imagen) | |
 | Recortar | Arrastra para dejar solo una parte de la página; un clic sin arrastrar quita el recorte | |
 | Formularios | Si el PDF trae casillas, se rellenan haciendo clic en ellas | |
 | Organizar páginas | En las miniaturas: ↑ ↓ para cambiar el orden (o arrastrarlas), ↻ para girar, ✕ para quitar | |
+| Imprimir | Abre la ventana de impresión con el PDF y todos tus cambios, para elegir impresora, copias y páginas | Ctrl+P |
 | Deshacer | | Ctrl+Z |
 | Guardar | | Ctrl+S |
 
